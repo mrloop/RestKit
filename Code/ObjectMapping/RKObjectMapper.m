@@ -130,9 +130,28 @@ static const NSString* kRKModelMapperMappingFormatParserKey = @"RKMappingFormatP
 	if (keyPath) {
 		object = [object valueForKeyPath:keyPath];
 	}
-	if ([object isKindOfClass:[NSDictionary class]]) {
-		return [self mapObjectFromDictionary:(NSDictionary*)object];
-	} else if ([object isKindOfClass:[NSArray class]]) {
+	if ([object isKindOfClass:[NSDictionary class]]) 
+	{
+		NSDictionary * dic = (NSDictionary *)object;
+		[dic objectForKey:@"total_rows"];
+		
+		NSNumber* offset = [dic objectForKey:@"offset"];
+		NSArray* rows = [dic objectForKey:@"rows"];
+		NSMutableArray* arr = [NSMutableArray arrayWithCapacity:[rows count]];
+		
+		Class class = nil; 
+		
+		for (NSDictionary* obj in rows)
+		{
+			NSLog(@"%@",[obj objectForKey:@"key"]);
+			NSLog(@"HERER %@",[obj objectForKey:@"value"]);
+			class = [_elementToClassMappings objectForKey:[obj objectForKey:@"key"]];
+			[arr addObject:[obj objectForKey:@"value"]];
+		}
+		return [self mapObjectsFromArrayOfDictionaries:arr toClass:class];
+		//return [self mapObjectFromDictionary:(NSDictionary*)object];
+	} 
+	else if ([object isKindOfClass:[NSArray class]]) {
 		if (class) {
 			return [self mapObjectsFromArrayOfDictionaries:(NSArray*)object toClass:class];
 		} else {
@@ -171,7 +190,7 @@ static const NSString* kRKModelMapperMappingFormatParserKey = @"RKMappingFormatP
 // TODO: Should accept RKObjectMappable instead of id...
 - (void)mapObject:(id)model fromDictionary:(NSDictionary*)dictionary {
 	Class class = [model class];
-	
+	NSLog(@"DICTIONARY : %@",dictionary);
 	NSArray* elementNames = [_elementToClassMappings allKeysForObject:class];
 	if ([elementNames count] == 0) {
 		if ([model conformsToProtocol:@protocol(RKObjectMappable)]) {
@@ -195,6 +214,8 @@ static const NSString* kRKModelMapperMappingFormatParserKey = @"RKMappingFormatP
 
 // TODO: Can I make this support keyPath??
 - (id)mapObjectFromDictionary:(NSDictionary*)dictionary {
+	NSLog(@"DICTIONARY : %@",dictionary);
+	
 	NSString* elementName = [[dictionary allKeys] objectAtIndex:0];
 	Class class = [_elementToClassMappings objectForKey:elementName];
 	NSDictionary* elements = [dictionary objectForKey:elementName];
@@ -205,6 +226,8 @@ static const NSString* kRKModelMapperMappingFormatParserKey = @"RKMappingFormatP
 }
 
 - (NSArray*)mapObjectsFromArrayOfDictionaries:(NSArray*)array {
+	NSLog(@"ARRAY : %@",array);
+	
 	NSMutableArray* objects = [NSMutableArray array];
 	for (NSDictionary* dictionary in array) {
 		if (![dictionary isKindOfClass:[NSNull class]]) {
@@ -222,6 +245,7 @@ static const NSString* kRKModelMapperMappingFormatParserKey = @"RKMappingFormatP
 }
 
 - (NSArray*)mapObjectsFromArrayOfDictionaries:(NSArray*)array toClass:(Class)class {
+	NSLog(@"ARRAY : %@",array);
 	NSMutableArray* objects = [NSMutableArray array];
 	for (NSDictionary* dictionary in array) {
 		if (![dictionary isKindOfClass:[NSNull class]]) {
